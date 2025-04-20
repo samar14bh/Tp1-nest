@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { SkillService } from 'src/skill/skill.service';
 import { FilterCvDto } from './dto/filterCvDto';
 import { UserService } from 'src/user/user.service';
+import { PaginationService ,PaginationResult} from 'src/services/pagination.service';
 
 @Injectable()
 export class CvService extends GenericService<Cv>  {
@@ -19,8 +20,24 @@ export class CvService extends GenericService<Cv>  {
     protected readonly repository: Repository<Cv>,
     private readonly skillService:SkillService,
     private readonly userService:UserService,
+    private readonly paginationService: PaginationService,
   ) {
     super(repository); 
+  }
+
+
+  //new paginate method
+  async paginate(
+    page = 1,
+    limit = 10,
+  ): Promise<PaginationResult<Cv>> {
+    const qb = this.repository
+      .createQueryBuilder('cv')
+      .leftJoinAndSelect('cv.user', 'user')
+      .leftJoinAndSelect('cv.skills', 'skills');
+      
+
+    return this.paginationService.paginateQuery<Cv>(qb, page, limit);
   }
   async findByJob(job: string): Promise<Cv[]> {
     return this.repository.find({ where: { job } });
@@ -30,7 +47,7 @@ export class CvService extends GenericService<Cv>  {
     return this.repository.find({ where: { user: { id: userId } } });
   }
 
-
+  
   async addSkillToCv(cvId: string, skillId: string): Promise<Cv> {
     const cv = await this.repository.findOne({ where: { id: cvId }, relations: ['skills'] });
     if (!cv) {

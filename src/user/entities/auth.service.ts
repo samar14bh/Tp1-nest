@@ -7,7 +7,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { LoginDTO } from '../dto/login.dto';
-import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -101,6 +100,7 @@ export class AuthService {
   }
 
   async remove(id: string) {
+    
     return await this.userRepository.delete(id).then((result) => {
       if (result.affected === 0) {
         throw new Error(`User with id ${id} not found`);

@@ -1,16 +1,19 @@
-import { BadRequestException, Body, Controller, Delete,ForbiddenException,Get,NotFoundException,Param,  Patch,  Post, Put, Query, Req, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete,ForbiddenException,Get,NotFoundException,Param,  Patch,  Post,  Query,  UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { CvService } from "./cv.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { Cv } from "./entities/cv.entity";
 import { PaginationService } from "src/services/pagination.service";
 import { ImageUploadInterceptor } from "src/Interceptor/image-upload.Interceptor";
 import { JwtAuthGuard } from "src/jwt/jwt-auth.guard";
-import { AdminGuard } from "src/jwt/admin.guard";
 import { User } from "src/user/entities/user.entity";
 import { CurrentUser } from "src/decorator/currentUser";
 import { UpdateCvDto } from "./dto/update-cv.dto";
+import { RoleGuard } from "src/jwt/RoleGuard";
+import { Role } from "src/decorator/roles.decorator";
 
-@UseGuards(JwtAuthGuard)
+
+
+@UseGuards(JwtAuthGuard, RoleGuard)
 @Controller({ path: 'cv', version: '2' })
 export class CvControllerV2 {
     constructor(private readonly cvService:CvService,    private readonly paginationService: PaginationService
@@ -19,18 +22,15 @@ export class CvControllerV2 {
 
 
     //before adding guard 
-    /* @Get()
+    @Get("paginate")
     async getAll(
       @Query('page') page: number = 1,
       @Query('limit') limit: number = 10,
     ) {
-      const data = await this.paginationService.paginate<Cv>(
-        this.cvService.getRepository(), // Use the repository from CvService
-        page,
-        limit,
-      );
-      return data;
+      limit = limit > 50 ? 50 : limit;
+      return this.cvService.paginate(page, limit);
     }
+    /*
     @Post()
     async create(@Body() cvDto: CreateCvDto, @Req() req): Promise<Cv> {
     return this.cvService.createWithOwner({
@@ -61,14 +61,16 @@ export class CvControllerV2 {
     }
 
   
-
-  @UseGuards(AdminGuard)
+  
+  //@UseGuards(AdminGuard)
+  @Role('admin')
   @Get('getAll')
   findAllAdmin() {
     return this.cvService.findAll();
   }
 
   @Get()
+
   findAllByUser(@CurrentUser() user: User) {
     if (user.role === 'admin') {
       return this.cvService.findAll();
@@ -124,13 +126,13 @@ export class CvControllerV2 {
 
 
 
-    @Post('upload')
+  @Post('upload')
   @UseInterceptors(ImageUploadInterceptor.imageInterceptor())
   async uploadCvImage(@UploadedFile() file: Express.Multer.File,@Body() body: { cvId: string}) {
     if (!file) {
       throw new BadRequestException('No valid image uploaded');
     }
-    const path = file.path;
+    const path = file.path.replace(/\\/g, '/').replace(/^public\//, '');
     const updatedCv = await this.cvService.setImagePath(body.cvId, path);
     return {
       message: 'Image uploaded successfully',
