@@ -1,6 +1,3 @@
-#database config
-'./db/db.config.json'
-
 # compiled output
 /dist
 /node_modules
