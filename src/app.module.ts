@@ -14,7 +14,6 @@ import { AuthMiddleware } from './middleware/auth.middleware';
 import { CvControllerV2 } from './cv/cv.controller.v2';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [ TypeOrmModule.forRoot({
@@ -31,17 +30,20 @@ import { JwtModule } from '@nestjs/jwt';
     rootPath: join(__dirname, '..', 'public', 'uploads'), 
     serveRoot: '/uploads',  
   }),
-  JwtModule.register({ secret: 'SECRET_KEY', signOptions: { expiresIn: '60m' } })
-  ],
+  
+  
+  ], 
+  
+  
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {
-  /*configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
       .forRoutes(CvControllerV2);
-  }*/
+  }
   
   
 }
